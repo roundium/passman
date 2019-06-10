@@ -35,18 +35,12 @@ class AdminUserAdmin(UserAdmin):
     readonly_fields = ['last_login_display', 'date_joined_display']
 
     def last_login_display(self, obj):
-        if None:
-            return '-'
-        else:
-            return datetime.strftime(obj.last_login, '%a %b %d, %Y')
+        return datetime.strftime(obj.last_login, '%a %b %d, %Y') if obj.last_login else '-'
 
     last_login_display.short_description = _('date created')
 
     def date_joined_display(self, obj):
-        if None:
-            return '-'
-        else:
-            return datetime.strftime(obj.date_joined, '%a %b %d, %Y')
+        return datetime.strftime(obj.date_joined, '%a %b %d, %Y') if obj.date_joined else '-'
 
     date_joined_display.short_description = _('date created')
 
@@ -99,10 +93,7 @@ class CredentialAdmin(admin.ModelAdmin):
     owner_name.short_description = _('owner')
 
     def date_created_display(self, obj):
-        if None:
-            return '-'
-        else:
-            return datetime.strftime(obj.date_created, '%a %b %d, %Y')
+        return datetime.strftime(obj.date_created, '%a %b %d, %Y') if obj.date_created else '-'
 
     date_created_display.short_description = _('date created')
 
@@ -155,9 +146,6 @@ class SecureNoteAdmin(admin.ModelAdmin):
     owner_name.short_description = _('owner')
 
     def date_created_display(self, obj):
-        if None:
-            return '-'
-        else:
-            return datetime.strftime(obj.date_created, '%a %b %d, %Y')
+        return datetime.strftime(obj.date_created, '%a %b %d, %Y') if obj.date_created else '-'
 
     date_created_display.short_description = _('date created')
