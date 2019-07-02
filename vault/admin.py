@@ -1,26 +1,25 @@
-from datetime import datetime
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
-from vault.models import User, Credential, SecureNote
+from vault.models import User, Team, Credential, SecureNote
 
-admin.site.site_header = 'Passman Admin Panel'
-admin.site.site_title = 'Passman Admin Panel'
-admin.site.index_title = 'Dashboard'
+admin.site.site_header = _('Passman Admin Panel')
+admin.site.site_title = _('Passman Admin Panel')
+admin.site.index_title = _('Dashboard')
 
 
 @admin.register(User)
-class AdminUserAdmin(UserAdmin):
+class UserAdmin(UserAdmin):
     date_hierarchy = 'date_joined'
     add_form_template = 'admin/auth/user/add_form.html'
     fieldsets = (
         [None, {'fields': ['email', 'password']}],
         (_('Personal info'), {'fields': ['first_name', 'last_name']}),
         [_('Permissions and status'),
-         {'fields': ['is_active', 'is_staff', 'is_superuser']}],
-        [_('Important dates'), {'fields': ('last_login_display', 'date_joined_display')}],
+         {'fields': ['is_active', 'is_staff', 'is_superuser', 'groups']}],
+        [_('Important dates'), {'fields': ('last_login', 'date_joined')}],
     )
     add_fieldsets = [
         [None, {
@@ -29,123 +28,92 @@ class AdminUserAdmin(UserAdmin):
         }],
     ]
     list_display = ['email', 'first_name', 'last_name', 'is_active', 'is_staff', 'is_superuser']
-    list_filter = ['is_active', 'is_superuser', 'is_staff']
+    list_filter = ['is_active', 'is_superuser', 'is_staff', 'groups']
     search_fields = ['first_name', 'last_name', 'email']
     ordering = ['email']
-    readonly_fields = ['last_login_display', 'date_joined_display']
 
-    def last_login_display(self, obj):
-        return datetime.strftime(obj.last_login, '%a %b %d, %Y') if obj.last_login else '-'
 
-    last_login_display.short_description = _('date created')
+@admin.register(Team)
+class TeamAdmin(admin.ModelAdmin):
+    fields = ['owner', 'name', 'members']
+    list_display = ['name', 'owner']
+    search_fields = ['name']
 
-    def date_joined_display(self, obj):
-        return datetime.strftime(obj.date_joined, '%a %b %d, %Y') if obj.date_joined else '-'
+    def get_queryset(self, request):
+        qs = super(TeamAdmin, self).get_queryset(request)
 
-    date_joined_display.short_description = _('date created')
+        if not request.user.is_superuser:
+            return qs.filter(owner=request.user)
+
+        return qs
+
+    def get_readonly_fields(self, request, obj=None):
+        self.readonly_fields = []
+
+        if not request.user.is_superuser or obj:
+            self.readonly_fields.insert(0, 'owner')
+
+        return self.readonly_fields
 
 
 @admin.register(Credential)
 class CredentialAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_created'
-    list_display = ['name', 'owner_name', 'date_created_display']
+    fieldsets = [
+        [None, {'fields': ['owner', 'team', 'name', 'username', 'password', 'url']}],
+        [_('Important dates'), {'fields': ['date_created']}],
+    ]
+    list_display = ['name', 'owner', 'date_created']
     list_filter = ['owner']
     search_fields = ['name', 'owner']
 
     def get_queryset(self, request):
-        query = super(CredentialAdmin, self).get_queryset(request)
+        qs = super(CredentialAdmin, self).get_queryset(request)
 
-        if request.user.is_superuser:
-            qs = query.all()
-        else:
-            qs = query.filter(owner=request.user)
+        if not request.user.is_superuser:
+            return qs.filter(
+                Q(owner=request.user) | Q(team__owner=request.user) | Q(team__in=request.user.team_set.all()))
+
         return qs
 
-    def get_fieldsets(self, request, obj=None):
-        self.fieldsets = [
-            [None, {'fields': ['name', 'username', 'password', 'url']}],
-            [_('Important dates'), {'fields': ['date_created_display']}],
-        ]
-
-        if request.user.is_superuser:
-            self.fieldsets[0][1].get('fields').insert(0, 'owner')
-        elif obj:
-            self.fieldsets[0][1].get('fields').insert(0, 'owner_name')
-        return self.fieldsets
-
     def get_readonly_fields(self, request, obj=None):
-        self.readonly_fields = ['date_created_display']
+        self.readonly_fields = []
 
         if not request.user.is_superuser or obj:
-            self.readonly_fields.insert(0, 'owner_name')
+            self.readonly_fields.insert(0, 'owner')
+
+            if not request.user == obj.owner:
+                self.readonly_fields.insert(0, 'team')
+
         return self.readonly_fields
-
-    def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser:
-            obj.owner = request.user
-
-        super(CredentialAdmin, self).save_model(request, obj, form, change)
-
-    def owner_name(self, obj):
-        full_name = obj.owner.get_full_name()
-        return full_name if full_name else obj.owner.email
-
-    owner_name.short_description = _('owner')
-
-    def date_created_display(self, obj):
-        return datetime.strftime(obj.date_created, '%a %b %d, %Y') if obj.date_created else '-'
-
-    date_created_display.short_description = _('date created')
 
 
 @admin.register(SecureNote)
 class SecureNoteAdmin(admin.ModelAdmin):
     date_hierarchy = 'date_created'
-    list_display = ['title', 'owner_name', 'date_created_display']
+    fieldsets = [
+        [None, {'fields': ['owner', 'team', 'title', 'note']}],
+        [_('Important dates'), {'fields': ['date_created']}],
+    ]
+    list_display = ['title', 'owner', 'date_created']
     list_filter = ['owner']
     search_fields = ['title', 'owner']
 
     def get_queryset(self, request):
-        query = super(SecureNoteAdmin, self).get_queryset(request)
+        qs = super(SecureNoteAdmin, self).get_queryset(request)
 
-        if request.user.is_superuser:
-            qs = query.all()
-        else:
-            qs = query.filter(owner=request.user)
+        if not request.user.is_superuser:
+            return qs.filter(Q(owner=request.user) | Q(team__in=request.user.team_set.all()))
+
         return qs
 
-    def get_fieldsets(self, request, obj=None):
-        self.fieldsets = [
-            [None, {'fields': ['title', 'note']}],
-            [_('Important dates'), {'fields': ['date_created_display']}],
-        ]
-
-        if request.user.is_superuser:
-            self.fieldsets[0][1].get('fields').insert(0, 'owner')
-        elif obj:
-            self.fieldsets[0][1].get('fields').insert(0, 'owner_name')
-        return self.fieldsets
-
     def get_readonly_fields(self, request, obj=None):
-        self.readonly_fields = ['date_created_display']
+        self.readonly_fields = []
 
         if not request.user.is_superuser or obj:
-            self.readonly_fields.insert(0, 'owner_name')
+            self.readonly_fields.insert(0, 'owner')
+
+            if not request.user == obj.owner:
+                self.readonly_fields.insert(0, 'team')
+
         return self.readonly_fields
-
-    def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser:
-            obj.owner = request.user
-
-        super(SecureNoteAdmin, self).save_model(request, obj, form, change)
-
-    def owner_name(self, obj):
-        full_name = obj.owner.get_full_name()
-        return full_name if full_name else obj.owner.email
-
-    owner_name.short_description = _('owner')
-
-    def date_created_display(self, obj):
-        return datetime.strftime(obj.date_created, '%a %b %d, %Y') if obj.date_created else '-'
-
-    date_created_display.short_description = _('date created')

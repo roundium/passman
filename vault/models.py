@@ -2,7 +2,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
-from django.utils import timezone
+
 from django.utils.translation import ugettext_lazy as _
 
 
@@ -38,7 +38,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     username = None
-    email = models.EmailField(_('Email'), unique=True,
+    email = models.EmailField(_('email address'), unique=True,
                               error_messages={'unique': _('A user with that email already exists.')})
 
     objects = UserManager()
@@ -47,31 +47,56 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
+    def __str__(self):
+        full_name = self.get_full_name()
+
+        return full_name if full_name else self.get_username()
+
+
+class Team(models.Model):
+    owner = models.ForeignKey('User', on_delete=models.CASCADE, verbose_name=_('owner'), related_name='owner')
+    members = models.ManyToManyField('User', verbose_name=_('users'), blank=True, related_name='team_set')
+    name = models.CharField(_('name'), max_length=150, unique=True)
+
+    class Meta:
+        verbose_name = _('team')
+        verbose_name_plural = _('teams')
+
+    def __str__(self):
+        return self.name
+
 
 class Credential(models.Model):
     username_validator = UnicodeUsernameValidator()
 
-    owner = models.OneToOneField('User', on_delete=models.CASCADE, primary_key=True)
+    owner = models.ForeignKey('User', on_delete=models.CASCADE, verbose_name=_('owner'))
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('team'))
     name = models.CharField(_('name'), max_length=150)
     username = models.CharField(_('username'), max_length=254,
                                 help_text=_('Required. 254 characters or fewer. Letters, digits and @/./+/-/_ only.'),
                                 validators=[username_validator])
     password = models.CharField(_('password'), max_length=128)
     url = models.URLField(_('URL'), blank=True)
-    date_created = models.DateTimeField(_('date created'), default=timezone.now)
+    date_created = models.DateTimeField(_('date created'), auto_now_add=True)
 
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = _('credential')
+        verbose_name_plural = _('credentials')
+
 
 class SecureNote(models.Model):
-    owner = models.ForeignKey('User', on_delete=models.CASCADE)
+    owner = models.ForeignKey('User', on_delete=models.CASCADE, verbose_name=_('owner'))
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, blank=True, verbose_name=_('team'))
     title = models.CharField(_('title'), max_length=150)
     note = models.TextField(_('note'))
-    date_created = models.DateTimeField(_('date created'), default=timezone.now)
+    date_created = models.DateTimeField(_('date created'), auto_now_add=True)
 
     def __str__(self):
         return self.title
 
     class Meta:
-        verbose_name_plural = 'Secure Notes'
+        verbose_name = _('secure note')
+        verbose_name_plural = _('secure notes')
