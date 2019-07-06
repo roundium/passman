@@ -18,7 +18,7 @@ setup:
 	sed -i -e "s/SECRET_KEY = '.*'/SECRET_KEY = '_'/" testproject/settings.py
 
 activate:
-	pipenv shell -c
+	pipenv shell
 
 test:
 	pipenv run coverage erase
