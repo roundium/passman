@@ -77,7 +77,7 @@ class CredentialAdmin(admin.ModelAdmin):
         return qs
 
     def get_readonly_fields(self, request, obj=None):
-        self.readonly_fields = []
+        self.readonly_fields = ['date_created']
 
         if not request.user.is_superuser or obj:
             self.readonly_fields.insert(0, 'owner')
@@ -108,7 +108,7 @@ class SecureNoteAdmin(admin.ModelAdmin):
         return qs
 
     def get_readonly_fields(self, request, obj=None):
-        self.readonly_fields = []
+        self.readonly_fields = ['date_created']
 
         if not request.user.is_superuser or obj:
             self.readonly_fields.insert(0, 'owner')
