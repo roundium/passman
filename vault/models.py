@@ -2,8 +2,21 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
-
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
+
+from vault.helpers import encrypt_value, decrypt_value
+
+
+@receiver(pre_save, sender='vault.Credential')
+def encrypt_password(sender, instance=None, **kwargs):
+    instance.password = instance.encrypted_password
+
+
+@receiver(pre_save, sender='vault.SecureNote')
+def encrypt_note(sender, instance=None, **kwargs):
+    instance.note = instance.encrypted_note
 
 
 class UserManager(BaseUserManager):
@@ -86,10 +99,18 @@ class Credential(models.Model):
         verbose_name = _('credential')
         verbose_name_plural = _('credentials')
 
+    @property
+    def encrypted_password(self):
+        return encrypt_value(self.password)
+
+    @property
+    def decrypted_password(self):
+        return decrypt_value(self.password)
+
 
 class SecureNote(models.Model):
     owner = models.ForeignKey('User', on_delete=models.CASCADE, verbose_name=_('owner'))
-    team = models.ForeignKey('Team', on_delete=models.CASCADE, blank=True, verbose_name=_('team'))
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, null=True, blank=True, verbose_name=_('team'))
     title = models.CharField(_('title'), max_length=150)
     note = models.TextField(_('note'))
     date_created = models.DateTimeField(_('date created'), auto_now_add=True)
@@ -100,3 +121,11 @@ class SecureNote(models.Model):
     class Meta:
         verbose_name = _('secure note')
         verbose_name_plural = _('secure notes')
+
+    @property
+    def encrypted_note(self):
+        return encrypt_value(self.note)
+
+    @property
+    def decrypted_note(self):
+        return decrypt_value(self.note)
