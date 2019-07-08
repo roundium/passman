@@ -50,10 +50,16 @@ class TeamAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         self.readonly_fields = []
 
-        if not request.user.is_superuser or obj:
+        if obj or not request.user.is_superuser:
             self.readonly_fields.insert(0, 'owner')
 
         return self.readonly_fields
+
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser:
+            obj.owner = request.user
+
+        super(TeamAdmin, self).save_model(request, obj, form, change)
 
 
 @admin.register(Credential)
@@ -79,13 +85,25 @@ class CredentialAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         self.readonly_fields = ['date_created']
 
-        if not request.user.is_superuser or obj:
+        if obj or not request.user.is_superuser:
             self.readonly_fields.insert(0, 'owner')
 
-            if not request.user == obj.owner:
-                self.readonly_fields.insert(0, 'team')
+        if obj and not request.user.is_superuser and not request.user == obj.owner:
+            self.readonly_fields.insert(0, 'team')
 
         return self.readonly_fields
+
+    def get_object(self, request, object_id, from_field=None):
+        obj = super(CredentialAdmin, self).get_object(request, object_id, from_field)
+        obj.password = obj.decrypted_password.decode()
+
+        return obj
+
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser:
+            obj.owner = request.user
+
+        super(CredentialAdmin, self).save_model(request, obj, form, change)
 
 
 @admin.register(SecureNote)
@@ -110,10 +128,22 @@ class SecureNoteAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         self.readonly_fields = ['date_created']
 
-        if not request.user.is_superuser or obj:
+        if obj or not request.user.is_superuser:
             self.readonly_fields.insert(0, 'owner')
 
-            if not request.user == obj.owner:
-                self.readonly_fields.insert(0, 'team')
+        if obj and not request.user.is_superuser and not request.user == obj.owner:
+            self.readonly_fields.insert(0, 'team')
 
         return self.readonly_fields
+
+    def get_object(self, request, object_id, from_field=None):
+        obj = super(SecureNoteAdmin, self).get_object(request, object_id, from_field)
+        obj.note = obj.decrypted_note.decode()
+
+        return obj
+
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser:
+            obj.owner = request.user
+
+        super(SecureNoteAdmin, self).save_model(request, obj, form, change)
