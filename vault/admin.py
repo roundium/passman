@@ -82,6 +82,11 @@ class CredentialAdmin(admin.ModelAdmin):
 
         return qs
 
+    def render_change_form(self, request, context, *args, **kwargs):
+        context['adminform'].form.fields['team'].queryset = Team.objects.filter(
+            Q(owner=request.user) | Q(members__in=[request.user]))
+        return super(CredentialAdmin, self).render_change_form(request, context, *args, **kwargs)
+
     def get_readonly_fields(self, request, obj=None):
         self.readonly_fields = ['date_created']
 
@@ -130,6 +135,11 @@ class SecureNoteAdmin(admin.ModelAdmin):
             return qs.filter(Q(owner=request.user) | Q(team__in=request.user.team_set.all()))
 
         return qs
+
+    def render_change_form(self, request, context, *args, **kwargs):
+        context['adminform'].form.fields['team'].queryset = Team.objects.filter(
+            Q(owner=request.user) | Q(members__in=[request.user]))
+        return super(SecureNoteAdmin, self).render_change_form(request, context, *args, **kwargs)
 
     def get_readonly_fields(self, request, obj=None):
         self.readonly_fields = ['date_created']
