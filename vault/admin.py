@@ -105,6 +105,12 @@ class CredentialAdmin(admin.ModelAdmin):
 
         super(CredentialAdmin, self).save_model(request, obj, form, change)
 
+    class Media:
+        css = {
+            'all': ['css/show_password.css']
+        }
+        js = ['js/show_password.js']
+
 
 @admin.register(SecureNote)
 class SecureNoteAdmin(admin.ModelAdmin):
