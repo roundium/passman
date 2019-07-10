@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
+from django.core.validators import MaxLengthValidator
 
 from vault.helpers import encrypt_value, decrypt_value
 
@@ -88,7 +89,7 @@ class Credential(models.Model):
     username = models.CharField(_('username'), max_length=254,
                                 help_text=_('Required. 254 characters or fewer. Letters, digits and @/./+/-/_ only.'),
                                 validators=[username_validator])
-    password = models.CharField(_('password'), max_length=128)
+    password = models.CharField(_('password'), max_length=254, validators=[MaxLengthValidator(64)])
     url = models.URLField(_('URL'), blank=True)
     date_created = models.DateTimeField(_('date created'), auto_now_add=True)
 
