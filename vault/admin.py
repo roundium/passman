@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
+from vault.forms import CredentialForm
 from vault.models import User, Team, Credential, SecureNote
 
 admin.site.site_header = _('Passman Admin Panel')
@@ -64,6 +65,7 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Credential)
 class CredentialAdmin(admin.ModelAdmin):
+    form = CredentialForm
     date_hierarchy = 'date_created'
     fieldsets = [
         [None, {'fields': ['owner', 'team', 'name', 'username', 'password', 'url']}],
