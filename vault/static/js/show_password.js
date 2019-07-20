@@ -6,6 +6,7 @@
         imgNode.classList.add('show-password');
 
         let referenceNode = document.querySelector('#id_password');
+        referenceNode.setAttribute('type', 'password');
         referenceNode.after(imgNode);
 
         $('img.show-password').click(function () {
