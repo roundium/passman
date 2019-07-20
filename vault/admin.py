@@ -65,7 +65,7 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Credential)
 class CredentialAdmin(admin.ModelAdmin):
-    form = CredentialForm
+    # form = CredentialForm
     date_hierarchy = 'date_created'
     fieldsets = [
         [None, {'fields': ['owner', 'team', 'name', 'username', 'password', 'url']}],
