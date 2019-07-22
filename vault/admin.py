@@ -93,7 +93,7 @@ class CredentialAdmin(admin.ModelAdmin):
         if obj or not request.user.is_superuser:
             self.readonly_fields.insert(0, 'owner')
 
-        if obj and not request.user.is_superuser and not request.user == obj.owner:
+        if obj and not request.user == obj.owner:
             self.readonly_fields.insert(0, 'team')
 
         return self.readonly_fields
@@ -147,7 +147,7 @@ class SecureNoteAdmin(admin.ModelAdmin):
         if obj or not request.user.is_superuser:
             self.readonly_fields.insert(0, 'owner')
 
-        if obj and not request.user.is_superuser and not request.user == obj.owner:
+        if obj and not request.user == obj.owner:
             self.readonly_fields.insert(0, 'team')
 
         return self.readonly_fields
