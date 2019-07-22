@@ -3,7 +3,6 @@ from django.contrib.auth.admin import UserAdmin
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
-from vault.forms import CredentialForm
 from vault.models import User, Team, Credential, SecureNote
 
 admin.site.site_header = _('Passman Admin Panel')
@@ -70,7 +69,7 @@ class CredentialAdmin(admin.ModelAdmin):
         [None, {'fields': ['owner', 'team', 'name', 'username', 'password', 'url']}],
         [_('Important dates'), {'fields': ['date_created']}],
     ]
-    list_display = ['name', 'owner', 'date_created']
+    list_display = ['name', 'owner', 'team', 'date_created']
     list_filter = ['owner']
     search_fields = ['name', 'owner']
 
@@ -125,7 +124,7 @@ class SecureNoteAdmin(admin.ModelAdmin):
         [None, {'fields': ['owner', 'team', 'title', 'note']}],
         [_('Important dates'), {'fields': ['date_created']}],
     ]
-    list_display = ['title', 'owner', 'date_created']
+    list_display = ['title', 'owner', 'team', 'date_created']
     list_filter = ['owner']
     search_fields = ['title', 'owner']
 
