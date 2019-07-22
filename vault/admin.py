@@ -65,7 +65,6 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Credential)
 class CredentialAdmin(admin.ModelAdmin):
-    # form = CredentialForm
     date_hierarchy = 'date_created'
     fieldsets = [
         [None, {'fields': ['owner', 'team', 'name', 'username', 'password', 'url']}],
@@ -86,7 +85,7 @@ class CredentialAdmin(admin.ModelAdmin):
 
     def render_change_form(self, request, context, *args, **kwargs):
         context['adminform'].form.fields['team'].queryset = Team.objects.filter(
-            Q(owner=request.user) | Q(members__in=[request.user]))
+            Q(owner=request.user) | Q(members__in=[request.user])).distinct()
         return super(CredentialAdmin, self).render_change_form(request, context, *args, **kwargs)
 
     def get_readonly_fields(self, request, obj=None):
@@ -140,7 +139,7 @@ class SecureNoteAdmin(admin.ModelAdmin):
 
     def render_change_form(self, request, context, *args, **kwargs):
         context['adminform'].form.fields['team'].queryset = Team.objects.filter(
-            Q(owner=request.user) | Q(members__in=[request.user]))
+            Q(owner=request.user) | Q(members__in=[request.user])).distinct()
         return super(SecureNoteAdmin, self).render_change_form(request, context, *args, **kwargs)
 
     def get_readonly_fields(self, request, obj=None):
