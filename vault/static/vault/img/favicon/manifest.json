@@ -1,5 +1,6 @@
 {
- "name": "App",
+ "name": "Passman",
+ "short_name": "Passman",
  "icons": [
   {
    "src": "\/android-icon-36x36.png",
@@ -37,5 +38,8 @@
    "type": "image\/png",
    "density": "4.0"
   }
- ]
+ ],
+    "theme_color": "#022f53",
+    "background_color": "#ffffff",
+    "display": "standalone"
 }
