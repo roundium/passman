@@ -71,7 +71,7 @@ class CredentialAdmin(admin.ModelAdmin):
     ]
     list_display = ['name', 'owner', 'team', 'date_created']
     list_filter = ['owner']
-    search_fields = ['name', 'owner']
+    search_fields = ['name', 'owner__first_name', 'owner__last_name', 'owner__email']
 
     def get_queryset(self, request):
         qs = super(CredentialAdmin, self).get_queryset(request)
@@ -127,7 +127,7 @@ class SecureNoteAdmin(admin.ModelAdmin):
     ]
     list_display = ['title', 'owner', 'team', 'date_created']
     list_filter = ['owner']
-    search_fields = ['title', 'owner']
+    search_fields = ['title', 'owner__first_name', 'owner__last_name', 'owner__email']
 
     def get_queryset(self, request):
         qs = super(SecureNoteAdmin, self).get_queryset(request)
